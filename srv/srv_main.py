@@ -20,12 +20,21 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
+import base64
+
 import cherrypy
 
 class SeriousServer(object):
     @cherrypy.expose
     def index(self):
-        return "A serious serving of cherrypy!"
+        toreturn = "A serious serving of cherrypy!<br>"
+
+        files = os.listdir('media')
+        for fname in files:
+            b64key = base64.b64encode(fname.encode('ascii')).decode('ascii')
+            toreturn += "%s %s<br>" % (fname, b64key)
+        return toreturn
 
 if __name__ == '__main__':
     cherrypy.config.update({'server.socket_host': '0.0.0.0'})
