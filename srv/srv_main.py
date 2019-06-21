@@ -27,19 +27,7 @@ import pathlib
 import cherrypy
 from cherrypy.lib import static as lib_static
 
-class MediaClip(object):
-    def __init__(self, uid, filename, title, thumbnail_filename):
-        """
-        Simple media item.
-        """
-        self._filename = filename
-        self._uid = uid
-        self._title = title
-        self._thumbnail_filename = thumbnail_filename
-
-
-    def get_filename(self):
-        return self._filename
+from media_clip import MediaClip
 
 class MediaLibrary(object):
     def __init__(self, directory_name):
@@ -61,7 +49,7 @@ class MediaLibrary(object):
         clips = []
         for fname in self._fname_whitelist:
             if fname.endswith('.mp4'):
-                clip = MediaClip(fname, fname, fname, 'missing_media.jpg')
+                clip = MediaClip(fname, fname, fname, None)
                 clips.append(clip)
 
         self._clips = clips
