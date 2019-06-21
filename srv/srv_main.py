@@ -27,15 +27,41 @@ import cherrypy
 from cherrypy.lib.static import serve_file
 
 class SeriousServer(object):
+
+    def _header(self):
+        """
+        Index page header.
+        """
+        toreturn = """
+<!doctype html><html lang=en>
+<head><meta charset=utf-8>
+<title>Super Basic Streaming Network Server</title>
+</head>
+"""
+
+
+        return toreturn
+
+
+    def _footer(self):
+        """
+        Index page footer.
+        """
+        return """</html>"""
+
+
     @cherrypy.expose
     def index(self):
-        toreturn = "A serious serving of cherrypy!<br>"
-
+        segments = [self._header()]
+        segments.append('<body>')
+        segments.append('<h3>Super Basic Streaming Network Server</h3>')
         fnames = os.listdir('media')
 
         for fname in fnames:
-            toreturn += self._render_tilecon(fname)
-        return toreturn
+            segments.append(self._render_tilecon(fname))
+
+        segments.append('</body>')
+        return "\n".join(segments)
 
     def _render_tilecon(self, media_id):
         """
