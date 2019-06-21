@@ -22,9 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import base64
+import pathlib
 
 import cherrypy
-from cherrypy.lib.static import serve_file
+from cherrypy.lib import static as lib_static
 
 class SeriousServer(object):
 
@@ -35,6 +36,7 @@ class SeriousServer(object):
         toreturn = """
 <!doctype html><html lang=en>
 <head><meta charset=utf-8>
+<link rel="stylesheet" href="./static?sbsns.css">
 <title>Super Basic Streaming Network Server</title>
 </head>
 """
@@ -75,26 +77,33 @@ class SeriousServer(object):
         return toreturn
 
     @cherrypy.expose
-    def static(self, *arg, **argv):
+    def static(self, **argv):
         """
         Serve a directory from the static directory.
         """
 
-        whitelist = ['missing_media.jpg']
+        directory_name = "static"
+        fname_whitelist = [str(p) for p in pathlib.Path(directory_name).rglob("*")]
+        fname_whitelist = [s[len(directory_name):].strip(os.sep) for s in fname_whitelist]
+
+
+
         fname = None
         try:
-            fname = arg[0]
-            if fname in whitelist:
-                fname = os.path.join('static', fname)
+            fname = list(argv)[0]
+            if fname in fname_whitelist:
+                fname = os.path.join(directory_name, fname)
                 fname = os.path.abspath(fname)
-                print("Statically serving '%s" % fname)
-                return serve_file(fname)
+
+                if os.path.isfile(fname):
+                    print("Statically serving '%s" % fname)
+                    return lib_static.serve_file(fname)
             else:
-                raise Exception("No file resolvable for arg '%s' and argv '%s'" % (arg, argv))
+                raise Exception("No file resolvable for argv '%s'" % (argv))
 
         except Exception as ex:
             print("Static request for '%s' failed with exception '%s'." % (fname, str(ex)))
-            return serve_file(os.path.abspath('static/missing_media.jpg'))
+            return lib_static.serve_file(os.path.abspath('static/missing_media.jpg'))
 
     @cherrypy.expose
     def serve_content(self, fkey):
@@ -122,13 +131,13 @@ class SeriousServer(object):
             fname = os.path.join('media', fkey)
             fname = os.path.abspath(fname)
             print("Statically serving '%s" % fname)
-            return serve_file(fname)
+            return lib_static.serve_file(fname)
 
         elif clearkey is not None and clearkey in fname_whitelist:
             fname = os.path.join('media', clearkey)
             fname = os.path.abspath(fname)
             print("Statically serving '%s" % fname)
-            return serve_file(fname)
+            return lib_static.serve_file(fname)
 
         else:
             cherrypy.response.headers['Content-Type'] = 'text/plain'
