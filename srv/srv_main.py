@@ -24,6 +24,7 @@ import os
 import base64
 
 import cherrypy
+from cherrypy.lib.static import serve_file
 
 class SeriousServer(object):
     @cherrypy.expose
@@ -33,9 +34,41 @@ class SeriousServer(object):
         fnames = os.listdir('media')
 
         for fname in fnames:
-            b64key = base64.b64encode(fname.encode('ascii')).decode('ascii')
-            toreturn += "<a href='./serve_content?fkey=%s'>%s</a><br>" % (b64key, fname)
+            toreturn += self._render_tilecon(fname)
         return toreturn
+
+    def _render_tilecon(self, media_id):
+        """
+        Render a tile/icon to html.
+        """
+        fname = media_id
+        toreturn = ""
+        b64key = base64.b64encode(fname.encode('ascii')).decode('ascii')
+        toreturn += "<div class='tilecon'><a href='./serve_content?fkey=%s'><img src='./static?missing_media.jpg' /><p>%s</p></a><br></div>" % (b64key, fname)
+
+        return toreturn
+
+    @cherrypy.expose
+    def static(self, *arg, **argv):
+        """
+        Serve a directory from the static directory.
+        """
+
+        whitelist = ['missing_media.jpg']
+        fname = None
+        try:
+            fname = arg[0]
+            if fname in whitelist:
+                fname = os.path.join('static', fname)
+                fname = os.path.abspath(fname)
+                print("Statically serving '%s" % fname)
+                return serve_file(fname)
+            else:
+                raise Exception("No file resolvable for arg '%s' and argv '%s'" % (arg, argv))
+
+        except Exception as ex:
+            print("Static request for '%s' failed with exception '%s'." % (fname, str(ex)))
+            return serve_file(os.path.abspath('static/missing_media.jpg'))
 
     @cherrypy.expose
     def serve_content(self, fkey):
@@ -49,7 +82,7 @@ class SeriousServer(object):
         except Exception as ex:
             print("Key %s not b64-decodable." % fkey)
 
-        from cherrypy.lib.static import serve_file
+
         #return serve_file(media[fkey], "application/x-download", "attachment")
 
 
