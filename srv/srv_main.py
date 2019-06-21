@@ -60,7 +60,7 @@ class SeriousServer(object):
         fnames = os.listdir('media')
 
         for fname in fnames:
-            segments.append(self._render_tilecon(fname))
+            segments += self._render_tilecon(fname)
 
         segments.append('</body>')
         return "\n".join(segments)
@@ -70,9 +70,13 @@ class SeriousServer(object):
         Render a tile/icon to html.
         """
         fname = media_id
-        toreturn = ""
+        toreturn = ["<div class='tilecon'>"]
         b64key = base64.b64encode(fname.encode('ascii')).decode('ascii')
-        toreturn += "<div class='tilecon'><a href='./serve_content?fkey=%s'><img src='./static?missing_media.jpg' /><p>%s</p></a><br></div>" % (b64key, fname)
+
+        toreturn.append("<a href='./serve_content?fkey=%s'>" % b64key)
+        toreturn.append("<img class='tilecon_thumb' src='./static?missing_media.jpg' /></a>")
+        toreturn.append("<br /><a href='./serve_content?fkey=%s' class='tilecon_title'>" % b64key)
+        toreturn.append("%s</a></div>" % (fname))
 
         return toreturn
 
