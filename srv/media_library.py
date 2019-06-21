@@ -37,9 +37,85 @@ class MediaLibrary(object):
         self._clips = None
         self.discover()
 
-    def discover(self):
+    def _discover_jsons(self):
         """
-        Traverse directory and re-populate any media clips.
+        Helper function that discoveres media via json metafiles.
+        """
+        clips = []
+
+        jsons = [str(p) for p in pathlib.Path(self._directory_name).rglob("*.json")]
+        jsons = [s[len(self._directory_name):].strip(os.sep) for s in jsons]
+
+        print(jsons)
+        for json_fname in jsons:
+            json_fname_abspath = os.path.abspath(os.path.join(self._directory_name, json_fname))
+            clip = None
+            with open(json_fname_abspath) as json_file:
+                json_str = json_file.read()
+                try:
+                    clip = self._clip_from_json(json_str)
+                except json.decoder.JSONDecodeError:
+                    print("Failed to read json from file '%s'" % json_fname_abspath)
+
+            if clip is not None:
+                clips.append(clip)
+
+        return clips
+
+    def _clip_from_json(self, json_str):
+        """
+        Given a string of json, return a media clip.
+
+        Return None is loading / parsing json fails.
+        """
+
+        json_obj = json.loads(json_str)
+        keys = list(json_obj)
+        print("Got %d keys worth of json." % len(keys))
+
+        uid = None
+        filename = None
+        title = None
+        thumbnail_filename = None
+
+        for key in json_obj:
+            val = json_obj[key]
+
+            if key.startswith('_'):
+                key = key.lstrip('_')
+
+            if key == 'id' or key == 'uid':
+                if type(val) == str:
+                    uid = val
+
+            if key == 'filename':
+                if type(val) == str:
+                    filename = val
+
+            if key == 'title':
+                if type(val) == str:
+                    title = val
+
+            if key == 'thumbnail_filename':
+                if type(val) == str:
+                    thumbnail_filename = val
+
+        if filename is None:
+            print("Failed to extract filename from json keys %s" % keys)
+
+        clip = None
+        try:
+            clip = MediaClip(uid, filename, title, thumbnail_filename)
+        except TypeError as err:
+            # If filename is valid, _discover_raws will catch this clip.
+            print("Failed to create clip for filename '%s'" % str(filename))
+
+        return clip
+
+
+    def _discover_raws(self, already_claimed=[]):
+        """
+        Helper function that discoveres media via raw metafiles.
         """
 
         fname_whitelist = [str(p) for p in pathlib.Path(self._directory_name).rglob("*")]
@@ -48,8 +124,18 @@ class MediaLibrary(object):
         clips = []
         for fname in self._fname_whitelist:
             if fname.endswith('.mp4'):
-                clip = MediaClip(fname, fname, fname, 'missing_media.jpg')
+                clip = MediaClip(fname, fname, fname, None)
                 clips.append(clip)
+
+        return clips
+
+    def discover(self):
+        """
+        Traverse directory and re-populate any media clips.
+        """
+        clips = []
+        clips += self._discover_jsons()
+        clips += self._discover_raws([])
 
         self._clips = clips
 
