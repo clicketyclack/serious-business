@@ -27,6 +27,59 @@ import pathlib
 import cherrypy
 from cherrypy.lib import static as lib_static
 
+class MediaClip(object):
+    def __init__(self, uid, filename, title, thumbnail_filename):
+        """
+        Simple media item.
+        """
+        self._filename = filename
+        self._uid = uid
+        self._title = title
+        self._thumbnail_filename = thumbnail_filename
+
+
+    def get_filename(self):
+        return self._filename
+
+class MediaLibrary(object):
+    def __init__(self, directory_name):
+        """
+        Represents a library based on a filesystem directory.
+        """
+        self._directory_name = directory_name
+        self._clips = None
+        self.discover()
+
+    def discover(self):
+        """
+        Traverse directory and re-populate any media clips.
+        """
+
+        fname_whitelist = [str(p) for p in pathlib.Path(self._directory_name).rglob("*")]
+        fname_whitelist = [s[len(self._directory_name):].strip(os.sep) for s in fname_whitelist]
+        self._fname_whitelist = fname_whitelist
+        clips = []
+        for fname in self._fname_whitelist:
+            if fname.endswith('.mp4'):
+                clip = MediaClip(fname, fname, fname, 'missing_media.jpg')
+                clips.append(clip)
+
+        self._clips = clips
+
+
+    def get_clip_filenames(self):
+        """
+        Get filenames of media library.
+        """
+        toreturn = []
+        for clip in self._clips:
+            filename = clip.get_filename()
+            if filename is not None:
+                toreturn.append(filename)
+
+        return toreturn
+
+
 class SeriousServer(object):
 
     def _header(self):
@@ -57,7 +110,8 @@ class SeriousServer(object):
         segments = [self._header()]
         segments.append('<body>')
         segments.append('<h3>Super Basic Streaming Network Server</h3>')
-        fnames = os.listdir('media')
+        ml = MediaLibrary('media')
+        fnames = ml.get_clip_filenames()
 
         for fname in fnames:
             segments += self._render_tilecon(fname)
