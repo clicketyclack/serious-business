@@ -114,7 +114,7 @@ class MediaLibrary(object):
                             # 'dangerous'. Admittedly there is low
                             # risk that someone would inject
                             # directory traversal or html escapes
-                            # via metadata. But still...                            
+                            # via metadata. But still...
                             MediaClip.sanitize_string_chs(val)
                             thumbnail_filename = val
                         except TypeError:
@@ -123,12 +123,13 @@ class MediaLibrary(object):
 
         if filename is None:
             print("Failed to extract filename from json keys %s" % keys)
-            if thumbnail_filename is None:
-                clip.infer_thumbnail(self._directory_name)
-
+            return
+            
         clip = None
         try:
             clip = MediaClip(uid, filename, title, thumbnail_filename)
+            if thumbnail_filename is None:
+                clip.infer_thumbnail(self._directory_name)
         except TypeError as err:
             # If filename is valid, _discover_raws will catch this clip.
             print("Failed to create clip for filename '%s'" % str(filename))
