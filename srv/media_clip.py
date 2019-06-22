@@ -122,13 +122,6 @@ class MediaClip():
             return 'static?missing_media.jpg'
         return "serve_content?fkey=%s" % self._thumbnail_filename
 
-    def get_thumbnail_filename(self):
-        """
-        Return a thumbnail picture filename. Fallback to missing media image, useful for raw clips without metadata.
-        """
-        if self._thumbnail_filename is None:
-            return 'missing_media.jpg'
-        return self._thumbnail_filename
 
     def get_title(self):
         """
