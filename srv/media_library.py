@@ -102,6 +102,8 @@ class MediaLibrary(object):
 
         if filename is None:
             print("Failed to extract filename from json keys %s" % keys)
+            if thumbnail_filename is None:
+                clip.infer_thumbnail(self._directory_name)
 
         clip = None
         try:
@@ -129,6 +131,7 @@ class MediaLibrary(object):
             if fname.endswith('.mp4'):
                 clip = MediaClip(fname, fname, fname, None)
                 clips.append(clip)
+                clip.infer_thumbnail(self._directory_name)
 
         return clips
 

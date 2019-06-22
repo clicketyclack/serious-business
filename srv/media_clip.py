@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import unittest
+import pathlib
+import os
 
 class MediaClip():
     def __init__(self, uid, filename, title, thumbnail_filename):
@@ -31,6 +33,40 @@ class MediaClip():
         self._uid = self._sanitize_string_chs(uid)
         self._title = self._sanitize_string_chs(title)
         self._thumbnail_filename = self._sanitize_string_chs(thumbnail_filename)
+
+
+    def infer_thumbnail(self, thumbs_directory=None):
+        """
+        Make an attempt at inferring a thumbnail.
+
+        Useful for the following cases:
+         - We don't have a metadata json, but the thumbnail has the same
+           name as the media file, with a different extension.
+         - Clip is audio only, but there is only one jpg in the
+           directory (i.e. podcasts, albums).
+        """
+        if True: #thumbs_directory:
+            whitelist = []
+            whitelist += [str(p) for p in pathlib.Path(thumbs_directory).rglob("*jpg")]
+            whitelist += [str(p) for p in pathlib.Path(thumbs_directory).rglob("*jpeg")]
+            whitelist += [str(p) for p in pathlib.Path(thumbs_directory).rglob("*png")]
+            whitelist += [str(p) for p in pathlib.Path(thumbs_directory).rglob("*gif")]
+
+            whitelist = [os.path.basename(p) for p in whitelist]
+
+            if len(whitelist) == 1:
+                return whitelist[0]
+
+            base, _ = os.path.splitext(self._filename)
+
+            candidates = ['%s.jpg' % base, '%s.jpeg' % base, '%s.png' % base, '%s.gif' % base]
+            for candidate in candidates:
+                if candidate in whitelist:
+                    print("Inferred thumbnail %s for base %s" % (candidate, base))
+                    self._thumbnail_filename = candidate
+                    return
+
+            print("Could not infer thumbnail for media filename %s, whitelist is '%s' " % (self._filename, whitelist))
 
     def _sanitize_string_chs(self, string):
         """
@@ -134,6 +170,19 @@ class TestMediaClip(unittest.TestCase):
             self.fail("Media clip failed to reject thumbnail filename with html-ish content.")
         except TypeError:
             pass
+
+    def test_infer_thumb(self):
+        """
+        landscape_thumb.mp4 -> landscape_thumb.png
+        """
+
+        fname = 'landscape_thumb.mp4'
+        clip = MediaClip(fname, fname, fname, None)
+        self.assertEqual(clip.get_thumbnail_page(), 'static?missing_media.jpg')
+        clip.infer_thumbnail('../srv')
+        self.assertEqual(clip.get_thumbnail_page(), 'static?missing_media.jpg')
+        clip.infer_thumbnail('../media')
+        self.assertEqual(clip.get_thumbnail_page(), 'serve_content?fkey=landscape_thumb.png')
 
 if __name__ == '__main__':
     unittest.main()
