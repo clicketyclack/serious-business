@@ -26,16 +26,16 @@ import os
 
 class MediaClip():
 
-    VALID_STR_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ -_.}[]{()#|"
+    VALID_STR_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ -_.}[]{()|"
 
     def __init__(self, uid, filename, title, thumbnail_filename):
         """
         Simple media item.
         """
-        self._filename = self.sanitize_string_chs(filename)
-        self._uid = self.sanitize_string_chs(uid)
-        self._title = self.sanitize_string_chs(title)
-        self._thumbnail_filename = self.sanitize_string_chs(thumbnail_filename)
+        self._filename = self.check_string_safe(filename)
+        self._uid = self.check_string_safe(uid)
+        self._title = self.check_string_safe(title)
+        self._thumbnail_filename = self.check_string_safe(thumbnail_filename)
 
 
     def infer_thumbnail(self, thumbs_directory=None):
@@ -72,9 +72,9 @@ class MediaClip():
             print("Could not infer thumbnail for media filename %s, whitelist is '%s' " % (self._filename, whitelist))
 
     @classmethod
-    def sanitize_string_chs(cls, string):
+    def check_string_safe(cls, string):
         """
-        Sanitize chars from any filename string.
+        Check if string is safe for filesystem or html use.
 
         Returns string if the string is ok. Ok means:
          - All characters are in the basic ascii printable subset.
@@ -100,11 +100,16 @@ class MediaClip():
 
     @classmethod
     def censor_string_chs(cls, string):
+        """
+        Sanitize chars from a string to make it 'safe'.
+
+        This may result in 0-length strings.
+        """
+
         toreturn = ""
         for ch in string:
             if ch in cls.VALID_STR_CHARS:
-                pass
-            toreturn += ch
+                toreturn += ch
 
         return toreturn
 
@@ -153,8 +158,6 @@ class TestMediaClip(unittest.TestCase):
 
         clip_exists = MediaClip('foo', 'foo', 'foo', 'foo.jpg')
         clip_missing = MediaClip('foo', 'foo', 'foo', None)
-        self.assertEqual(clip_exists.get_thumbnail_filename(), 'foo.jpg')
-        self.assertEqual(clip_missing.get_thumbnail_filename(), 'missing_media.jpg')
         self.assertEqual(clip_exists.get_thumbnail_page(), 'serve_content?fkey=foo.jpg')
         self.assertEqual(clip_missing.get_thumbnail_page(), 'static?missing_media.jpg')
 
@@ -176,6 +179,17 @@ class TestMediaClip(unittest.TestCase):
             self.fail("Media clip failed to reject thumbnail filename with html-ish content.")
         except TypeError:
             pass
+
+    def test_string_censoring(self):
+        """
+        Verify that strings can be scrubbed from html & filesystem-
+        sensitive characters.
+        """
+        title_orig = "<<< HeLL0 |&| w0r?D \\o/ >>>"
+        title_censored = MediaClip.censor_string_chs(title_orig)
+        self.assertTrue("<" not in title_censored)
+        self.assertTrue("/" not in title_censored)
+        self.assertTrue("\\" not in title_censored)
 
     def test_infer_thumb(self):
         """

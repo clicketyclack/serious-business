@@ -95,7 +95,7 @@ class MediaLibrary(object):
             if key == 'title':
                 if type(val) == str:
                     try:
-                        title = MediaClip.sanitize_string_chs(val)
+                        title = MediaClip.check_string_safe(val)
                     except TypeError:
                         # title contains invalid chars.
                         alternate = MediaClip.censor_string_chs(val)
@@ -115,7 +115,7 @@ class MediaLibrary(object):
                             # risk that someone would inject
                             # directory traversal or html escapes
                             # via metadata. But still...
-                            MediaClip.sanitize_string_chs(val)
+                            MediaClip.check_string_safe(val)
                             thumbnail_filename = val
                         except TypeError:
                             # Thumbnail contains invalid chars.
