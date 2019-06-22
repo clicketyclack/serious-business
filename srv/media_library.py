@@ -94,11 +94,32 @@ class MediaLibrary(object):
 
             if key == 'title':
                 if type(val) == str:
-                    title = val
+                    try:
+                        title = MediaClip.sanitize_string_chs(val)
+                    except TypeError:
+                        # title contains invalid chars.
+                        alternate = MediaClip.censor_string_chs(val)
+                        if len(alternate) > 5:
+                            print("Title '%s has alternate '%s'" % (val, alternate) )
+                            title = alternate
 
-            if key == 'thumbnail_filename' or key == 'thumbnail':
-                if type(val) == str:
-                    thumbnail_filename = val
+
+            # Thumbnail must have image-ish file extension.
+            if key in ['thumbnail_filename', 'thumbnail']:
+                if type(val) == str and '.' in val:
+                    _, ext = os.path.splitext(val)
+                    if ext in ['.jpg', '.jpeg', '.png', 'gif']:
+                        try:
+                            # Check if thumbnail filename is in any way
+                            # 'dangerous'. Admittedly there is low
+                            # risk that someone would inject
+                            # directory traversal or html escapes
+                            # via metadata. But still...                            
+                            MediaClip.sanitize_string_chs(val)
+                            thumbnail_filename = val
+                        except TypeError:
+                            # Thumbnail contains invalid chars.
+                            pass
 
         if filename is None:
             print("Failed to extract filename from json keys %s" % keys)

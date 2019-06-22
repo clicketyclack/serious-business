@@ -25,14 +25,17 @@ import pathlib
 import os
 
 class MediaClip():
+
+    VALID_STR_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ -_.}[]{()#|"
+
     def __init__(self, uid, filename, title, thumbnail_filename):
         """
         Simple media item.
         """
-        self._filename = self._sanitize_string_chs(filename)
-        self._uid = self._sanitize_string_chs(uid)
-        self._title = self._sanitize_string_chs(title)
-        self._thumbnail_filename = self._sanitize_string_chs(thumbnail_filename)
+        self._filename = self.sanitize_string_chs(filename)
+        self._uid = self.sanitize_string_chs(uid)
+        self._title = self.sanitize_string_chs(title)
+        self._thumbnail_filename = self.sanitize_string_chs(thumbnail_filename)
 
 
     def infer_thumbnail(self, thumbs_directory=None):
@@ -45,7 +48,7 @@ class MediaClip():
          - Clip is audio only, but there is only one jpg in the
            directory (i.e. podcasts, albums).
         """
-        if True: #thumbs_directory:
+        if thumbs_directory:
             whitelist = []
             whitelist += [str(p) for p in pathlib.Path(thumbs_directory).rglob("*jpg")]
             whitelist += [str(p) for p in pathlib.Path(thumbs_directory).rglob("*jpeg")]
@@ -68,7 +71,8 @@ class MediaClip():
 
             print("Could not infer thumbnail for media filename %s, whitelist is '%s' " % (self._filename, whitelist))
 
-    def _sanitize_string_chs(self, string):
+    @classmethod
+    def sanitize_string_chs(cls, string):
         """
         Sanitize chars from any filename string.
 
@@ -88,12 +92,21 @@ class MediaClip():
         if len(string) == 0:
             raise TypeError("Validation failed, got empty string.")
 
-        valid_chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ -_.}[]{()#|"
         for ch in string:
-            if ch not in valid_chars:
+            if ch not in cls.VALID_STR_CHARS:
                 raise TypeError("Validation failed, got invalid char '%s' for string '%s'" % (ch, string))
 
         return string
+
+    @classmethod
+    def censor_string_chs(cls, string):
+        toreturn = ""
+        for ch in string:
+            if ch in cls.VALID_STR_CHARS:
+                pass
+            toreturn += ch
+
+        return toreturn
 
     def get_uid(self):
         """
