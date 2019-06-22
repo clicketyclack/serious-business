@@ -123,6 +123,9 @@ class MediaLibrary(object):
         self._fname_whitelist = fname_whitelist
         clips = []
         for fname in self._fname_whitelist:
+            if fname in already_claimed:
+                continue
+
             if fname.endswith('.mp4'):
                 clip = MediaClip(fname, fname, fname, None)
                 clips.append(clip)
@@ -135,7 +138,12 @@ class MediaLibrary(object):
         """
         clips = []
         clips += self._discover_jsons()
-        clips += self._discover_raws([])
+
+        already_claimed = []
+        for clip in clips:
+            already_claimed.append(clip.get_filename())
+
+        clips += self._discover_raws(already_claimed)
 
         self._clips = clips
 
