@@ -78,7 +78,7 @@ class SeriousServer(object):
         b64key = base64.b64encode(fname.encode('ascii')).decode('ascii')
 
         toreturn.append("<a href='./serve_content?fkey=%s'>" % b64key)
-        toreturn.append("<img class='tilecon_thumb' src='./static?missing_media.jpg' /></a>")
+        toreturn.append("<img class='tilecon_thumb' src='./%s' /></a>" % clip.get_thumbnail_page())
         toreturn.append("<br /><a href='./serve_content?fkey=%s' class='tilecon_title'>" % b64key)
         toreturn.append("%s</a></div>" % (clip.get_title()))
 

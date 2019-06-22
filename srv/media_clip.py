@@ -65,6 +65,14 @@ class MediaClip():
         """
         return self._uid
 
+    def get_thumbnail_page(self):
+        """
+        Return a thumbnail picture filename. Fallback to missing media image, useful for raw clips without metadata.
+        """
+        if self._thumbnail_filename is None:
+            return 'static?missing_media.jpg'
+        return "serve_content?fkey=%s" % self._thumbnail_filename
+
     def get_thumbnail_filename(self):
         """
         Return a thumbnail picture filename. Fallback to missing media image, useful for raw clips without metadata.
@@ -94,7 +102,7 @@ class MediaClip():
 class TestMediaClip(unittest.TestCase):
 
 
-    def test_get_thumbnail_filename(self):
+    def test_get_thumbnail(self):
         try:
             _ = MediaClip('foo', 'foo', 'foo', 'foo/x.jpg')
             self.fail("Media clip failed to reject thumbnail filename with path separator.")
@@ -105,6 +113,8 @@ class TestMediaClip(unittest.TestCase):
         clip_missing = MediaClip('foo', 'foo', 'foo', None)
         self.assertEqual(clip_exists.get_thumbnail_filename(), 'foo.jpg')
         self.assertEqual(clip_missing.get_thumbnail_filename(), 'missing_media.jpg')
+        self.assertEqual(clip_exists.get_thumbnail_page(), 'serve_content?fkey=foo.jpg')
+        self.assertEqual(clip_missing.get_thumbnail_page(), 'static?missing_media.jpg')
 
 
     def test_sanitization(self):

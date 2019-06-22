@@ -96,7 +96,7 @@ class MediaLibrary(object):
                 if type(val) == str:
                     title = val
 
-            if key == 'thumbnail_filename':
+            if key == 'thumbnail_filename' or key == 'thumbnail':
                 if type(val) == str:
                     thumbnail_filename = val
 
@@ -173,6 +173,15 @@ class TestMediaLibrary(unittest.TestCase):
         clips = ml.get_clips()
         self.assertTrue(len(clips) > 0)
 
+
+    def test_discover_thumbnails(self):
+        ml = MediaLibrary('../media')
+        clips = ml.get_clips()
+        landscape_clips = [c for c in clips if 'andsca' in c.get_title()]
+        self.assertEqual(len(landscape_clips), 1)
+
+        thumb = landscape_clips[0].get_thumbnail_page()
+        self.assertTrue(thumb.endswith('thumb.png'))
 
 if __name__ == '__main__':
     unittest.main()
