@@ -32,6 +32,12 @@ from media_library import MediaLibrary
 
 class SeriousServer(object):
 
+    def __init__(self):
+        """
+        SeriousServer : A Super Basic Streaming Network Server
+        """
+        self._tilecon_render_cache = {}
+
     def _header(self):
         """
         Index page header.
@@ -73,6 +79,10 @@ class SeriousServer(object):
         """
         Render a tile/icon to html.
         """
+
+        if clip.get_uid() in self._tilecon_render_cache:
+            return self._tilecon_render_cache[clip.get_uid()]
+
         fname = clip.get_filename()
         toreturn = ["<div class='tilecon'>"]
         b64key = base64.b64encode(fname.encode('ascii')).decode('ascii')
@@ -82,6 +92,7 @@ class SeriousServer(object):
         toreturn.append("<br /><a href='./serve_content?fkey=%s' class='tilecon_title'>" % b64key)
         toreturn.append("%s</a></div>" % (clip.get_title()))
 
+        self._tilecon_render_cache[clip.get_uid()] = toreturn
         return toreturn
 
     @cherrypy.expose
