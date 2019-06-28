@@ -89,7 +89,7 @@ class SeriousServer(object):
 
         toreturn.append("<a href='./serve_content?fkey=%s'>" % b64key)
         toreturn.append("<img class='tilecon_thumb' src='./%s' /></a>" % clip.get_thumbnail_page())
-        toreturn.append("<br /><a href='./serve_content?fkey=%s' class='tilecon_title'>" % b64key)
+        toreturn.append("<br /><a href='./fronter?fkey=%s' class='tilecon_title'>" % b64key)
         toreturn.append("%s</a></div>" % (clip.get_title()))
 
         self._tilecon_render_cache[clip.get_uid()] = toreturn
@@ -162,6 +162,16 @@ class SeriousServer(object):
             cherrypy.response.headers['Content-Type'] = 'text/plain'
             cherrypy.response.status=404
             return "No such fkey"
+
+    @cherrypy.expose
+    def fronter(self, fkey):
+        """
+        Return full page for a given fkey.
+        """
+        content = [self._header(), "Hello world", "<a href='./serve_content?fkey=%s' class='tilecon_title'>Click here.</a>" % fkey, self._footer()]
+        return "\n".join(content)
+
+
 
 
 if __name__ == '__main__':
