@@ -45,7 +45,7 @@ class SeriousServer(object):
         toreturn = """
 <!doctype html><html lang=en>
 <head><meta charset=utf-8>
-<link rel="stylesheet" href="./static?sbsns.css">
+<link rel="stylesheet" href="./static/sbsns.css">
 <title>Super Basic Streaming Network Server</title>
 </head>
 """
@@ -95,34 +95,6 @@ class SeriousServer(object):
         self._tilecon_render_cache[clip.get_uid()] = toreturn
         return toreturn
 
-    @cherrypy.expose
-    def static(self, **argv):
-        """
-        Serve a directory from the static directory.
-        """
-
-        directory_name = "static"
-        fname_whitelist = [str(p) for p in pathlib.Path(directory_name).rglob("*")]
-        fname_whitelist = [s[len(directory_name):].strip(os.sep) for s in fname_whitelist]
-
-
-
-        fname = None
-        try:
-            fname = list(argv)[0]
-            if fname in fname_whitelist:
-                fname = os.path.join(directory_name, fname)
-                fname = os.path.abspath(fname)
-
-                if os.path.isfile(fname):
-                    print("Statically serving '%s" % fname)
-                    return lib_static.serve_file(fname)
-            else:
-                raise Exception("No file resolvable for argv '%s'" % (argv))
-
-        except Exception as ex:
-            print("Static request for '%s' failed with exception '%s'." % (fname, str(ex)))
-            return lib_static.serve_file(os.path.abspath('static/missing_media.jpg'))
 
     @cherrypy.expose
     def serve_content(self, fkey):
@@ -172,8 +144,28 @@ class SeriousServer(object):
         return "\n".join(content)
 
 
+PATH = os.path.abspath('./static')
 
+class Static:
+
+    @cherrypy.expose
+    def index(self):
+        return """Index."""
 
 if __name__ == '__main__':
-    cherrypy.config.update({'server.socket_host': '0.0.0.0'})
-    cherrypy.quickstart(SeriousServer())
+    conf_static = {
+        '/': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': PATH,
+            },
+    }
+
+    conf_global = {'server.socket_port': 8080,
+                   'server.socket_host': '0.0.0.0' }
+    cherrypy.config.update(conf_global)
+
+    cherrypy.tree.mount(SeriousServer(), '/') #, blog_conf)
+    cherrypy.tree.mount(Static(), '/static', conf_static)
+
+    cherrypy.engine.start()
+    cherrypy.engine.block()

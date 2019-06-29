@@ -124,7 +124,7 @@ class MediaClip():
         Return a thumbnail picture filename. Fallback to missing media image, useful for raw clips without metadata.
         """
         if self._thumbnail_filename is None:
-            return 'static?missing_media.jpg'
+            return 'static/missing_media.jpg'
         return "serve_content?fkey=%s" % self._thumbnail_filename
 
 
@@ -159,7 +159,7 @@ class TestMediaClip(unittest.TestCase):
         clip_exists = MediaClip('foo', 'foo', 'foo', 'foo.jpg')
         clip_missing = MediaClip('foo', 'foo', 'foo', None)
         self.assertEqual(clip_exists.get_thumbnail_page(), 'serve_content?fkey=foo.jpg')
-        self.assertEqual(clip_missing.get_thumbnail_page(), 'static?missing_media.jpg')
+        self.assertEqual(clip_missing.get_thumbnail_page(), 'static/missing_media.jpg')
 
 
     def test_sanitization(self):
@@ -198,9 +198,9 @@ class TestMediaClip(unittest.TestCase):
 
         fname = 'landscape_thumb.mp4'
         clip = MediaClip(fname, fname, fname, None)
-        self.assertEqual(clip.get_thumbnail_page(), 'static?missing_media.jpg')
+        self.assertEqual(clip.get_thumbnail_page(), 'static/missing_media.jpg')
         clip.infer_thumbnail('../srv')
-        self.assertEqual(clip.get_thumbnail_page(), 'static?missing_media.jpg')
+        self.assertEqual(clip.get_thumbnail_page(), 'static/missing_media.jpg')
         clip.infer_thumbnail('../media')
         self.assertEqual(clip.get_thumbnail_page(), 'serve_content?fkey=landscape_thumb.png')
 
