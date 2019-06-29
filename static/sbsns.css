@@ -21,6 +21,13 @@ div.tilecon {
 
 }
 
+div.fronted_clip {
+  border: 0px solid #79B694;
+  border-radius: 0.8em;
+  padding: 1em;
+  clear: both;
+}
+
 img.tilecon_thumb {
   margin: 3%;
   align-content: center;

@@ -45,6 +45,7 @@ class SeriousServer(object):
         toreturn = """
 <!doctype html><html lang=en>
 <head><meta charset=utf-8>
+<link rel="stylesheet" href="./static/v/video-js.css">
 <link rel="stylesheet" href="./static/sbsns.css">
 <title>Super Basic Streaming Network Server</title>
 </head>
@@ -89,7 +90,7 @@ class SeriousServer(object):
 
         toreturn.append("<a href='./serve_content?fkey=%s'>" % b64key)
         toreturn.append("<img class='tilecon_thumb' src='./%s' /></a>" % clip.get_thumbnail_page())
-        toreturn.append("<br /><a href='./fronter?fkey=%s' class='tilecon_title'>" % b64key)
+        toreturn.append("<br /><a href='./fronter?clip_uid=%s' class='tilecon_title'>" % clip.get_uid())
         toreturn.append("%s</a></div>" % (clip.get_title()))
 
         self._tilecon_render_cache[clip.get_uid()] = toreturn
@@ -136,12 +137,33 @@ class SeriousServer(object):
             return "No such fkey"
 
     @cherrypy.expose
-    def fronter(self, fkey):
+    def fronter(self, clip_uid):
         """
         Return full page for a given fkey.
         """
-        content = [self._header(), "Hello world", "<a href='./serve_content?fkey=%s' class='tilecon_title'>Click here.</a>" % fkey, self._footer()]
-        return "\n".join(content)
+        segments = [self._header()]
+        segments.append('<body>')
+        segments.append('<h3>Super Basic Streaming Network Server</h3><div class="fronted_clip"><p>')
+
+        template = """<video id='my-video' class='video-js' controls preload='auto' width='640' height='264'
+            poster='THUMBNAIL_IMAGE' data-setup='{}'>
+            <source src='MP4_FILENAME' type='video/mp4'>
+            <!-- <source src='void.webm' type='video/webm'> -->
+            <p class='vjs-no-js'>
+            To view this video please enable JavaScript, and consider upgrading to a web browser that supports HTML5 video.
+            </p>
+            </video>"""
+
+        segments.append('</p></div>')
+        segments.append("<script src='./static/v/video.js'></script>")
+        segments.append('</body>')
+
+        render = template.replace('THUMBNAIL_IMAGE', clip_uid).replace('MP4_FILENAME', clip_uid)
+        segments += [render]
+
+        # , "Hello world", "<a href='./serve_content?fkey=%s' class='tilecon_title'>Click here.</a>" % fkey,
+        segments += [self._footer()]
+        return "\n".join(segments)
 
 
 PATH = os.path.abspath('./static')
