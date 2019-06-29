@@ -37,6 +37,7 @@ class SeriousServer(object):
         SeriousServer : A Super Basic Streaming Network Server
         """
         self._tilecon_render_cache = {}
+        self._media_library = MediaLibrary('media')
 
     def _header(self):
         """
@@ -67,10 +68,9 @@ class SeriousServer(object):
         segments = [self._header()]
         segments.append('<body>')
         segments.append('<h3>Super Basic Streaming Network Server</h3>')
-        ml = MediaLibrary('media')
-        fnames = ml.get_clip_filenames()
+        fnames = self._media_library.get_clip_filenames()
 
-        for clip in ml.get_clips():
+        for clip in self._media_library.get_clips():
             segments += self._render_tilecon(clip)
 
         segments.append('</body>')
@@ -147,7 +147,7 @@ class SeriousServer(object):
 
         template = """<video id='my-video' class='video-js' controls preload='auto' width='640' height='264'
             poster='THUMBNAIL_IMAGE' data-setup='{}'>
-            <source src='MP4_FILENAME' type='video/mp4'>
+            <source src='./serve_content?fkey=MP4_B64KEY' type='video/mp4'>
             <!-- <source src='void.webm' type='video/webm'> -->
             <p class='vjs-no-js'>
             To view this video please enable JavaScript, and consider upgrading to a web browser that supports HTML5 video.
@@ -158,10 +158,19 @@ class SeriousServer(object):
         segments.append("<script src='./static/v/video.js'></script>")
         segments.append('</body>')
 
-        render = template.replace('THUMBNAIL_IMAGE', clip_uid).replace('MP4_FILENAME', clip_uid)
-        segments += [render]
+        thumbnail_image = clip_uid
+        mp4_filename = clip_uid
+        mp4_b64key = clip_uid
 
-        # , "Hello world", "<a href='./serve_content?fkey=%s' class='tilecon_title'>Click here.</a>" % fkey,
+        clips = self._media_library.get_clips()
+        for clip in clips:
+            if clip.get_uid() == clip_uid:
+                thumbnail_image = clip.get_thumbnail_page()
+                mp4_filename = clip.get_filename()
+                mp4_b64key = base64.b64encode(mp4_filename.encode('ascii')).decode('ascii')
+
+        render = template.replace('THUMBNAIL_IMAGE', thumbnail_image).replace('MP4_B64KEY', mp4_b64key)
+        segments += [render]
         segments += [self._footer()]
         return "\n".join(segments)
 
