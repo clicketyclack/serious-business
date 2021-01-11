@@ -151,9 +151,12 @@ class MediaLibrary(object):
                 continue
 
             if fname.endswith('.mp4'):
-                clip = MediaClip(fname, fname, fname, None)
-                clips.append(clip)
-                clip.infer_thumbnail(self._directory_name)
+                try:
+                    clip = MediaClip(fname, fname, fname, None)
+                    clips.append(clip)
+                    clip.infer_thumbnail(self._directory_name)
+                except Exception as ex:
+                    print(ex)
 
         return clips
 

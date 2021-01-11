@@ -94,7 +94,7 @@ class MediaClip():
 
         for ch in string:
             if ch not in cls.VALID_STR_CHARS:
-                raise TypeError("Validation failed, got invalid char '%s' for string '%s'" % (ch, string))
+                raise TypeError("Validation failed, got invalid char '%s'<%s> for string '%s'" % (ch, ord(ch), string))
 
         return string
 
