@@ -24,20 +24,30 @@ import os
 import base64
 import pathlib
 
+import argparse
 import cherrypy
 from cherrypy.lib import static as lib_static
 
 from media_clip import MediaClip
 from media_library import MediaLibrary
 
+def media_abs_location(args):
+    media_location = args.media_location
+    if media_location is not None:
+        media_location = os.path.abspath(media_location)
+    else:
+        media_location = os.path.abspath('media')
+    return media_location
+
 class SeriousServer(object):
 
-    def __init__(self):
+    def __init__(self, args):
         """
         SeriousServer : A Super Basic Streaming Network Server
         """
         self._tilecon_render_cache = {}
-        self._media_library = MediaLibrary('media')
+        self._media_location = media_abs_location(args)
+        self._media_library = MediaLibrary(self._media_location)
 
     def _header(self):
         """
@@ -117,16 +127,16 @@ class SeriousServer(object):
         # whilelist, only containing content in
         # the media directory. Basic protection
         # against directory traversal.
-        fname_whitelist = os.listdir('media')
+        fname_whitelist = os.listdir(self._media_location)
 
         if fkey in fname_whitelist:
-            fname = os.path.join('media', fkey)
+            fname = os.path.join(self._media_location, fkey)
             fname = os.path.abspath(fname)
             print("Statically serving '%s" % fname)
             return lib_static.serve_file(fname)
 
         elif clearkey is not None and clearkey in fname_whitelist:
-            fname = os.path.join('media', clearkey)
+            fname = os.path.join(self._media_location, clearkey)
             fname = os.path.abspath(fname)
             print("Statically serving '%s" % fname)
             return lib_static.serve_file(fname)
@@ -184,6 +194,13 @@ class Static:
         return """Index."""
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Serious Business simple media server.')
+    parser.add_argument('-m', '--media-location',
+                        help='Path to media content.')
+    parser.add_argument('-a', '--assets-location',
+                        help='Path to static assets.')
+    args = parser.parse_args()
+
     conf_static = {
         '/': {
                 'tools.staticdir.on': True,
@@ -195,7 +212,7 @@ if __name__ == '__main__':
                    'server.socket_host': '0.0.0.0' }
     cherrypy.config.update(conf_global)
 
-    cherrypy.tree.mount(SeriousServer(), '/') #, blog_conf)
+    cherrypy.tree.mount(SeriousServer(args), '/') #, blog_conf)
     cherrypy.tree.mount(Static(), '/static', conf_static)
 
     cherrypy.engine.start()
