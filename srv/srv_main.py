@@ -199,6 +199,8 @@ if __name__ == '__main__':
                         help='Path to media content.')
     parser.add_argument('-a', '--assets-location',
                         help='Path to static assets.')
+    parser.add_argument('-p', '--port', type=int, default=8080,
+                        help='Port.')
     args = parser.parse_args()
 
     conf_static = {
@@ -208,7 +210,12 @@ if __name__ == '__main__':
             },
     }
 
-    conf_global = {'server.socket_port': 8080,
+    port = args.port
+
+    if port < 1025 or port > 65530:
+        raise ValueError("Bad port %d" % port)
+
+    conf_global = {'server.socket_port': port,
                    'server.socket_host': '0.0.0.0' }
     cherrypy.config.update(conf_global)
 
